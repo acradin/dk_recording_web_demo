@@ -21,4 +21,5 @@ Thumbs.db
 
 # 기타
 *.log
-instance/ 
+instance/
+uploads/ 

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>단어별 녹음</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="container max-w-lg mx-auto bg-white rounded-xl shadow-md p-8 mt-12">
+        <h1 class="text-2xl font-bold text-center mb-8 text-blue-700">단어별 녹음</h1>
+        <ul id="word-list" class="space-y-6">
+            {% for word in words %}
+            <li class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3 shadow-sm">
+                <span class="text-lg font-medium text-gray-800 word-label">{{ word }}</span>
+                <div class="flex items-center space-x-2">
+                    <button onclick="startRecording(this)" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition disabled:opacity-50">녹음 시작</button>
+                    <button onclick="stopRecording(this)" disabled class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50">정지</button>
+                    <button onclick="saveRecording(this)" disabled class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition disabled:opacity-50">저장</button>
+                    <audio controls style="display:none;"></audio>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <div id="upload-result" class="mt-6 text-center text-sm"></div>
+    </div>
+    <script>
+    let mediaRecorder;
+    let audioChunks;
+    let currentAudioElem;
+    let currentStartBtn;
+    let currentStopBtn;
+    let currentSaveBtn;
+    let currentWord;
+    let currentAudioBlob;
+
+    function startRecording(btn) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                mediaRecorder.onstop = () => {
+                    currentAudioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(currentAudioBlob);
+                    currentAudioElem.src = audioUrl;
+                    currentAudioElem.style.display = 'inline-block';
+                    currentSaveBtn.disabled = false;
+                };
+                const parent = btn.parentElement.parentElement;
+                currentAudioElem = parent.querySelector('audio');
+                currentStartBtn = btn;
+                currentStopBtn = btn.parentElement.querySelectorAll('button')[1];
+                currentSaveBtn = btn.parentElement.querySelectorAll('button')[2];
+                currentWord = parent.querySelector('.word-label').textContent;
+                mediaRecorder.start();
+                currentStartBtn.disabled = true;
+                currentStopBtn.disabled = false;
+                currentSaveBtn.disabled = true;
+            });
+    }
+    function stopRecording(btn) {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            currentStartBtn.disabled = false;
+            currentStopBtn.disabled = true;
+        }
+    }
+    function saveRecording(btn) {
+        if (!currentAudioBlob) return;
+        const formData = new FormData();
+        const filename = `${currentWord}_${Date.now()}.wav`;
+        formData.append('audio', currentAudioBlob, filename);
+        formData.append('word', currentWord);
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.getElementById('upload-result');
+            if (data.success) {
+                resultDiv.textContent = `저장 성공: ${data.filename}`;
+                resultDiv.className = 'mt-6 text-center text-green-600 text-sm';
+            } else {
+                resultDiv.textContent = `저장 실패: ${data.error}`;
+                resultDiv.className = 'mt-6 text-center text-red-600 text-sm';
+            }
+        })
+        .catch(() => {
+            const resultDiv = document.getElementById('upload-result');
+            resultDiv.textContent = '저장 중 오류 발생';
+            resultDiv.className = 'mt-6 text-center text-red-600 text-sm';
+        });
+        btn.disabled = true;
+    }
+    </script>
+</body>
+</html> 
