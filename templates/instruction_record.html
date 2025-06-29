@@ -9,6 +9,10 @@
     <div class="container max-w-6xl mx-auto bg-white rounded-xl shadow-md p-8 mt-12 relative">
         <button id="adminBtn" class="absolute top-6 right-8 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-blue-500 hover:text-white transition">관리자 페이지</button>
         <h1 class="text-2xl font-bold text-center mb-8 text-blue-700">명령어 녹음</h1>
+        <div class="flex justify-center mb-6">
+            <input id="searchInput" type="text" placeholder="명령어 검색" class="w-72 px-4 py-2 border border-gray-300 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            <button id="searchBtn" class="px-4 py-2 bg-blue-500 text-white rounded-r hover:bg-blue-600 transition">검색</button>
+        </div>
         <ul id="instruction-list" class="space-y-8">
             {% for instruction in instructions %}
             <li class="bg-gray-50 rounded-lg px-4 py-4 shadow-sm">
@@ -24,6 +28,7 @@
             </li>
             {% endfor %}
         </ul>
+        <div id="noResultMsg" class="mt-6 text-center text-gray-500 text-sm hidden">검색 결과가 없습니다.</div>
         <div id="upload-result" class="mt-6 text-center text-sm"></div>
         <!-- 관리자 비밀번호 모달 -->
         <div id="adminModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
@@ -47,6 +52,32 @@
     let currentSaveBtn;
     let currentInstruction;
     let currentAudioBlob;
+
+    // 명령어 검색 기능
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const instructionList = document.getElementById('instruction-list');
+    const noResultMsg = document.getElementById('noResultMsg');
+
+    function filterInstructions() {
+        const query = searchInput.value.trim().toLowerCase();
+        let hasResult = false;
+        instructionList.querySelectorAll('li').forEach(li => {
+            const label = li.querySelector('.instruction-label').textContent.toLowerCase();
+            if (label.includes(query)) {
+                li.style.display = '';
+                hasResult = true;
+            } else {
+                li.style.display = 'none';
+            }
+        });
+        noResultMsg.classList.toggle('hidden', hasResult);
+    }
+    searchInput.addEventListener('input', filterInstructions);
+    searchBtn.addEventListener('click', filterInstructions);
+    searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') filterInstructions();
+    });
 
     // Start recording audio for the selected instruction
     function startRecording(btn) {
