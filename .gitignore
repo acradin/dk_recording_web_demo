@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 환경설정
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 기타
+*.log
+instance/ 
