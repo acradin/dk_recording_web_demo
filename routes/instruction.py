@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify
 from services.instruction_service import get_instruction_list
 import os
 from werkzeug.utils import secure_filename
-from unidecode import unidecode  # 한글 등 비영문자를 영문자로 변환
+from unidecode import unidecode
 
 # Create a Blueprint for instruction-related routes
 instruction_bp = Blueprint("instruction", __name__)

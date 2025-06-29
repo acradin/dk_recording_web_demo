@@ -6,15 +6,26 @@ from services.instruction_service import (
     delete_instruction,
 )
 from functools import wraps
+import os
 
 # Create a Blueprint for admin-related routes
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-ADMIN_PASSWORD = "1234"
+ADMIN_PASSWORD = os.getenv("SECRET_KEY")
 
 
-# 인증 체크 데코레이터
+# Decorator for admin authentication check
 def admin_login_required(f):
+    """
+    Date: 2025-06-29
+    Author: Minjun Park
+    Description: Redirects to login page if admin session is not authenticated.
+    Args:
+        f: Wrapped function
+    Returns:
+        Wrapped function with authentication check
+    """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get("admin_authenticated"):
@@ -27,6 +38,15 @@ def admin_login_required(f):
 
 @admin_bp.route("/login", methods=["GET", "POST"])
 def admin_login():
+    """
+    Date: 2025-06-29
+    Author: Minjun Park
+    Description: Handles admin login (password authentication). Stores session info on success.
+    Args:
+        password: Admin password (POST form)
+    Returns:
+        Redirects to admin page on success, renders login form on failure
+    """
     if request.method == "POST":
         password = request.form.get("password")
         if password == ADMIN_PASSWORD:
@@ -37,33 +57,23 @@ def admin_login():
     return render_template("admin_login.html")
 
 
-@admin_bp.route("/logout")
-def admin_logout():
-    session.pop("admin_authenticated", None)
-    flash("로그아웃되었습니다.")
-    return redirect(url_for("admin.admin_login"))
-
-
 @admin_bp.route("/instructions", methods=["GET", "POST"])
 @admin_login_required
 def admin_instructions():
     """
     Date: 2025-06-29
     Author: Minjun Park
-    Description: Admin page for managing instructions (list, add).
-
+    Description: Admin page for listing and adding instructions.
     Args:
-        text: New instruction to add (POST, form field)
+        text: New instruction to add (POST form)
     Returns:
-        Rendered admin_instructions.html template with instruction list.
+        Renders admin_instructions.html template with instruction list
     """
-    # Handle new instruction addition
     if request.method == "POST":
         text = request.form.get("text")
         if text:
             add_instruction(text)
         return redirect(url_for("admin.admin_instructions"))
-    # Get all instructions for display
     instructions = get_all_instructions()
     return render_template("admin_instructions.html", instructions=instructions)
 
@@ -75,14 +85,12 @@ def edit_instruction(instruction_id):
     Date: 2025-06-29
     Author: Minjun Park
     Description: Edit an existing instruction.
-
     Args:
         instruction_id: ID of the instruction to edit (URL param)
-        text: New instruction text (POST, form field)
+        text: New instruction text (POST form)
     Returns:
-        Redirects to admin_instructions page.
+        Redirects to admin_instructions page
     """
-    # Update the instruction with new text
     new_text = request.form.get("text")
     if new_text:
         update_instruction(instruction_id, new_text)
@@ -96,12 +104,10 @@ def delete_instruction_route(instruction_id):
     Date: 2025-06-29
     Author: Minjun Park
     Description: Delete an instruction from the database.
-
     Args:
         instruction_id: ID of the instruction to delete (URL param)
     Returns:
-        Redirects to admin_instructions page.
+        Redirects to admin_instructions page
     """
-    # Delete the instruction from the database
     delete_instruction(instruction_id)
     return redirect(url_for("admin.admin_instructions"))
