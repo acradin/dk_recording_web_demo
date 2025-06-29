@@ -55,14 +55,18 @@ def upload_audio():
     audio = request.files["audio"]
     instruction = request.form["instruction"]
 
-    # Convert instruction to safe ASCII for filename
+    # Convert instruction to safe ASCII for folder name
     safe_instruction = unidecode(instruction)
+
+    # Create directory for this instruction if it doesn't exist
+    instruction_folder = os.path.join(UPLOAD_FOLDER, safe_instruction)
+    os.makedirs(instruction_folder, exist_ok=True)
 
     # Create a secure filename for saving
     filename = secure_filename(f"{safe_instruction}_{audio.filename}")
-    save_path = os.path.join(UPLOAD_FOLDER, filename)
+    save_path = os.path.join(instruction_folder, filename)
 
-    # Save the audio file to the uploads folder
+    # Save the audio file to the instruction folder
     audio.save(save_path)
 
     return jsonify({"success": True, "filename": filename})
