@@ -10,6 +10,7 @@ load_dotenv()  # .env 파일에서 환경변수 로드
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.secret_key = os.getenv("SECRET_KEY")
 
 db.init_app(app)
 

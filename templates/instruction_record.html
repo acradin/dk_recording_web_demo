@@ -7,7 +7,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-start justify-center">
     <div class="container max-w-6xl mx-auto bg-white rounded-xl shadow-md p-8 mt-12 relative">
-        <a href="/admin/instructions" class="absolute top-6 right-8 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-blue-500 hover:text-white transition">관리자 페이지</a>
+        <button id="adminBtn" class="absolute top-6 right-8 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-blue-500 hover:text-white transition">관리자 페이지</button>
         <h1 class="text-2xl font-bold text-center mb-8 text-blue-700">명령어 녹음</h1>
         <ul id="instruction-list" class="space-y-8">
             {% for instruction in instructions %}
@@ -25,6 +25,18 @@
             {% endfor %}
         </ul>
         <div id="upload-result" class="mt-6 text-center text-sm"></div>
+        <!-- 관리자 비밀번호 모달 -->
+        <div id="adminModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-xs">
+                <h2 class="text-lg font-bold mb-4 text-center">관리자 인증</h2>
+                <input id="adminPw" type="password" placeholder="비밀번호 입력" class="w-full px-3 py-2 border rounded focus:outline-none mb-4">
+                <div id="adminError" class="text-red-600 text-sm mb-2 text-center hidden"></div>
+                <div class="flex justify-between">
+                    <button onclick="closeAdminModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">취소</button>
+                    <button onclick="submitAdminPw()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">확인</button>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
     let mediaRecorder;
@@ -105,6 +117,39 @@
             resultDiv.className = 'mt-6 text-center text-red-600 text-sm';
         });
         btn.disabled = true;
+    }
+
+    // 관리자 페이지 버튼 클릭 시 모달 표시
+    document.getElementById('adminBtn').onclick = function() {
+        document.getElementById('adminModal').classList.remove('hidden');
+        document.getElementById('adminPw').value = '';
+        document.getElementById('adminError').classList.add('hidden');
+    };
+    function closeAdminModal() {
+        document.getElementById('adminModal').classList.add('hidden');
+    }
+    function submitAdminPw() {
+        const pw = document.getElementById('adminPw').value;
+        if (!pw) {
+            showAdminError('비밀번호를 입력하세요.');
+            return;
+        }
+        fetch('/admin/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'password=' + encodeURIComponent(pw)
+        })
+        .then(res => res.url.endsWith('/admin/instructions') ? window.location.href = '/admin/instructions' : res.text())
+        .then(text => {
+            if (typeof text === 'string' && !text.includes('/admin/instructions')) {
+                showAdminError('비밀번호가 올바르지 않습니다.');
+            }
+        });
+    }
+    function showAdminError(msg) {
+        const err = document.getElementById('adminError');
+        err.textContent = msg;
+        err.classList.remove('hidden');
     }
     </script>
 </body>

@@ -1,16 +1,51 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from services.instruction_service import (
     get_all_instructions,
     add_instruction,
     update_instruction,
     delete_instruction,
 )
+from functools import wraps
 
 # Create a Blueprint for admin-related routes
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
+ADMIN_PASSWORD = "1234"
+
+
+# 인증 체크 데코레이터
+def admin_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("admin_authenticated"):
+            flash("관리자 인증이 필요합니다.")
+            return redirect(url_for("admin.admin_login"))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+@admin_bp.route("/login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        password = request.form.get("password")
+        if password == ADMIN_PASSWORD:
+            session["admin_authenticated"] = True
+            return redirect(url_for("admin.admin_instructions"))
+        else:
+            flash("비밀번호가 올바르지 않습니다.")
+    return render_template("admin_login.html")
+
+
+@admin_bp.route("/logout")
+def admin_logout():
+    session.pop("admin_authenticated", None)
+    flash("로그아웃되었습니다.")
+    return redirect(url_for("admin.admin_login"))
+
 
 @admin_bp.route("/instructions", methods=["GET", "POST"])
+@admin_login_required
 def admin_instructions():
     """
     Date: 2025-06-29
@@ -34,6 +69,7 @@ def admin_instructions():
 
 
 @admin_bp.route("/instructions/edit/<int:instruction_id>", methods=["POST"])
+@admin_login_required
 def edit_instruction(instruction_id):
     """
     Date: 2025-06-29
@@ -54,6 +90,7 @@ def edit_instruction(instruction_id):
 
 
 @admin_bp.route("/instructions/delete/<int:instruction_id>", methods=["POST"])
+@admin_login_required
 def delete_instruction_route(instruction_id):
     """
     Date: 2025-06-29
