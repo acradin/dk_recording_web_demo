@@ -33,14 +33,19 @@
     let currentWord;
     let currentAudioBlob;
 
+    // Start recording audio for the selected word
     function startRecording(btn) {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
+
+                // Collect audio data chunks
                 mediaRecorder.ondataavailable = event => {
                     audioChunks.push(event.data);
                 };
+
+                // When recording stops, create a Blob and enable the save button
                 mediaRecorder.onstop = () => {
                     currentAudioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     const audioUrl = URL.createObjectURL(currentAudioBlob);
@@ -48,6 +53,8 @@
                     currentAudioElem.style.display = 'inline-block';
                     currentSaveBtn.disabled = false;
                 };
+                
+                // Set references to current UI elements
                 const parent = btn.parentElement.parentElement;
                 currentAudioElem = parent.querySelector('audio');
                 currentStartBtn = btn;
@@ -60,6 +67,8 @@
                 currentSaveBtn.disabled = true;
             });
     }
+
+    // Stop the current audio recording
     function stopRecording(btn) {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
@@ -67,12 +76,17 @@
             currentStopBtn.disabled = true;
         }
     }
+    // Save the recorded audio to the server
     function saveRecording(btn) {
         if (!currentAudioBlob) return;
         const formData = new FormData();
         const filename = `${currentWord}_${Date.now()}.wav`;
+
+        // Append audio blob and word info to the form data
         formData.append('audio', currentAudioBlob, filename);
         formData.append('word', currentWord);
+
+        // Send the audio file to the server via POST
         fetch('/upload', {
             method: 'POST',
             body: formData
