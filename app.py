@@ -2,7 +2,7 @@ import os
 from flask import Flask
 from dotenv import load_dotenv
 from extensions import db
-from routes.word import word_bp
+from routes.instruction import instruction_bp
 from routes.admin import admin_bp
 
 load_dotenv()  # .env 파일에서 환경변수 로드
@@ -13,7 +13,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
-app.register_blueprint(word_bp)
+app.register_blueprint(instruction_bp)
 app.register_blueprint(admin_bp)
 
 if __name__ == "__main__":

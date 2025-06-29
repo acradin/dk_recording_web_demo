@@ -1,65 +1,70 @@
 from flask import Blueprint, render_template, request, redirect, url_for
-from services.word_service import get_all_words, add_word, update_word, delete_word
+from services.instruction_service import (
+    get_all_instructions,
+    add_instruction,
+    update_instruction,
+    delete_instruction,
+)
 
 # Create a Blueprint for admin-related routes
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
-@admin_bp.route("/words", methods=["GET", "POST"])
-def admin_words():
+@admin_bp.route("/instructions", methods=["GET", "POST"])
+def admin_instructions():
     """
     Date: 2025-06-29
     Author: Minjun Park
-    Description: Admin page for managing words (list, add).
+    Description: Admin page for managing instructions (list, add).
 
     Args:
-        text: New word to add (POST, form field)
+        text: New instruction to add (POST, form field)
     Returns:
-        Rendered admin_words.html template with word list.
+        Rendered admin_instructions.html template with instruction list.
     """
-    # Handle new word addition
+    # Handle new instruction addition
     if request.method == "POST":
         text = request.form.get("text")
         if text:
-            add_word(text)
-        return redirect(url_for("admin.admin_words"))
-    # Get all words for display
-    words = get_all_words()
-    return render_template("admin_words.html", words=words)
+            add_instruction(text)
+        return redirect(url_for("admin.admin_instructions"))
+    # Get all instructions for display
+    instructions = get_all_instructions()
+    return render_template("admin_instructions.html", instructions=instructions)
 
 
-@admin_bp.route("/words/edit/<int:word_id>", methods=["POST"])
-def edit_word(word_id):
+@admin_bp.route("/instructions/edit/<int:instruction_id>", methods=["POST"])
+def edit_instruction(instruction_id):
     """
     Date: 2025-06-29
     Author: Minjun Park
-    Description: Edit an existing word.
+    Description: Edit an existing instruction.
 
     Args:
-        word_id: ID of the word to edit (URL param)
-        text: New word text (POST, form field)
+        instruction_id: ID of the instruction to edit (URL param)
+        text: New instruction text (POST, form field)
     Returns:
-        Redirects to admin_words page.
+        Redirects to admin_instructions page.
     """
-    # Update the word with new text
+    # Update the instruction with new text
     new_text = request.form.get("text")
     if new_text:
-        update_word(word_id, new_text)
-    return redirect(url_for("admin.admin_words"))
+        update_instruction(instruction_id, new_text)
+    return redirect(url_for("admin.admin_instructions"))
 
 
-@admin_bp.route("/words/delete/<int:word_id>", methods=["POST"])
-def delete_word_route(word_id):
+@admin_bp.route("/instructions/delete/<int:instruction_id>", methods=["POST"])
+def delete_instruction_route(instruction_id):
     """
     Date: 2025-06-29
     Author: Minjun Park
-    Description: Delete a word from the database.
+    Description: Delete an instruction from the database.
 
     Args:
-        word_id: ID of the word to delete (URL param)
+        instruction_id: ID of the instruction to delete (URL param)
     Returns:
-        Redirects to admin_words page.
+        Redirects to admin_instructions page.
     """
-    # Delete the word from the database
-    delete_word(word_id)
-    return redirect(url_for("admin.admin_words"))
+    # Delete the instruction from the database
+    delete_instruction(instruction_id)
+    return redirect(url_for("admin.admin_instructions"))

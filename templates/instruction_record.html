@@ -2,16 +2,19 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>단어별 녹음</title>
+    <title>명령어 녹음</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="container max-w-lg mx-auto bg-white rounded-xl shadow-md p-8 mt-12">
-        <h1 class="text-2xl font-bold text-center mb-8 text-blue-700">단어별 녹음</h1>
-        <ul id="word-list" class="space-y-6">
-            {% for word in words %}
-            <li class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3 shadow-sm">
-                <span class="text-lg font-medium text-gray-800 word-label">{{ word }}</span>
+<body class="bg-gray-100 min-h-screen flex items-start justify-center">
+    <div class="container max-w-6xl mx-auto bg-white rounded-xl shadow-md p-8 mt-12 relative">
+        <a href="/admin/instructions" class="absolute top-6 right-8 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-blue-500 hover:text-white transition">관리자 페이지</a>
+        <h1 class="text-2xl font-bold text-center mb-8 text-blue-700">명령어 녹음</h1>
+        <ul id="instruction-list" class="space-y-8">
+            {% for instruction in instructions %}
+            <li class="bg-gray-50 rounded-lg px-4 py-4 shadow-sm">
+                <div class="mb-3">
+                    <span class="text-lg font-medium text-gray-800 instruction-label">{{ instruction }}</span>
+                </div>
                 <div class="flex items-center space-x-2">
                     <button onclick="startRecording(this)" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition disabled:opacity-50">녹음 시작</button>
                     <button onclick="stopRecording(this)" disabled class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50">정지</button>
@@ -30,21 +33,19 @@
     let currentStartBtn;
     let currentStopBtn;
     let currentSaveBtn;
-    let currentWord;
+    let currentInstruction;
     let currentAudioBlob;
 
-    // Start recording audio for the selected word
+    // Start recording audio for the selected instruction
     function startRecording(btn) {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
-
                 // Collect audio data chunks
                 mediaRecorder.ondataavailable = event => {
                     audioChunks.push(event.data);
                 };
-
                 // When recording stops, create a Blob and enable the save button
                 mediaRecorder.onstop = () => {
                     currentAudioBlob = new Blob(audioChunks, { type: 'audio/wav' });
@@ -53,21 +54,19 @@
                     currentAudioElem.style.display = 'inline-block';
                     currentSaveBtn.disabled = false;
                 };
-                
                 // Set references to current UI elements
                 const parent = btn.parentElement.parentElement;
                 currentAudioElem = parent.querySelector('audio');
                 currentStartBtn = btn;
                 currentStopBtn = btn.parentElement.querySelectorAll('button')[1];
                 currentSaveBtn = btn.parentElement.querySelectorAll('button')[2];
-                currentWord = parent.querySelector('.word-label').textContent;
+                currentInstruction = parent.querySelector('.instruction-label').textContent;
                 mediaRecorder.start();
                 currentStartBtn.disabled = true;
                 currentStopBtn.disabled = false;
                 currentSaveBtn.disabled = true;
             });
     }
-
     // Stop the current audio recording
     function stopRecording(btn) {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -80,12 +79,10 @@
     function saveRecording(btn) {
         if (!currentAudioBlob) return;
         const formData = new FormData();
-        const filename = `${currentWord}_${Date.now()}.wav`;
-
-        // Append audio blob and word info to the form data
+        const filename = `${currentInstruction}_${Date.now()}.wav`;
+        // Append audio blob and instruction info to the form data
         formData.append('audio', currentAudioBlob, filename);
-        formData.append('word', currentWord);
-
+        formData.append('instruction', currentInstruction);
         // Send the audio file to the server via POST
         fetch('/upload', {
             method: 'POST',
@@ -95,7 +92,7 @@
         .then(data => {
             const resultDiv = document.getElementById('upload-result');
             if (data.success) {
-                resultDiv.textContent = `저장 성공: ${data.filename}`;
+                resultDiv.textContent = `저장됨: ${data.filename}`;
                 resultDiv.className = 'mt-6 text-center text-green-600 text-sm';
             } else {
                 resultDiv.textContent = `저장 실패: ${data.error}`;
