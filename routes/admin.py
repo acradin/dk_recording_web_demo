@@ -7,6 +7,9 @@ from services.instruction_service import (
 )
 from functools import wraps
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Create a Blueprint for admin-related routes
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
