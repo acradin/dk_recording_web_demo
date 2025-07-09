@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, send_from_directory
 from services.instruction_service import get_instruction_list
 import os
 from werkzeug.utils import secure_filename
@@ -70,3 +70,39 @@ def upload_audio():
     audio.save(save_path)
 
     return jsonify({"success": True, "filename": filename})
+
+
+@instruction_bp.route("/audio-files-by-label", methods=["POST"])
+def audio_files_by_label():
+    """
+    Date: 2025-07-09
+    Author: Minjun Park
+    Description: 주어진 명령어(label)에 해당하는 오디오 파일 목록을 반환합니다.
+    Args:
+        label: 명령어 라벨 (POST JSON)
+    Returns:
+        JSON (files: 오디오 파일명 리스트, folder: 폴더명)
+    """
+    label = request.json.get("label")
+    if not label:
+        return jsonify({"files": []})
+    folder = unidecode(label)
+    upload_dir = os.path.join("uploads", folder)
+    if not os.path.isdir(upload_dir):
+        return jsonify({"files": []})
+    files = [f for f in os.listdir(upload_dir) if f.endswith(".wav")]
+    return jsonify({"files": files, "folder": folder})
+
+
+@instruction_bp.route("/uploads/<path:filename>")
+def uploaded_file(filename):
+    """
+    Date: 2025-07-09
+    Author: Minjun Park
+    Description: 업로드된 오디오 파일을 클라이언트에 서빙합니다.
+    Args:
+        filename: 요청된 파일 경로 (URL param)
+    Returns:
+        오디오 파일 (send_from_directory)
+    """
+    return send_from_directory("uploads", filename)

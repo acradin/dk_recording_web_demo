@@ -17,14 +17,16 @@
             {% for instruction in instructions %}
             <li class="bg-gray-50 rounded-lg px-4 py-4 shadow-sm">
                 <div class="mb-3">
-                    <span class="text-lg font-medium text-gray-800 instruction-label">{{ instruction }}</span>
+                    <span class="text-lg font-medium text-gray-800 instruction-label">{{ instruction.label }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
                     <button onclick="startRecording(this)" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition disabled:opacity-50">녹음 시작</button>
                     <button onclick="stopRecording(this)" disabled class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50">정지</button>
                     <button onclick="saveRecording(this)" disabled class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition disabled:opacity-50">저장</button>
                     <audio controls style="display:none;"></audio>
+                    <button type="button" class="show-audio-btn px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-blue-400 hover:text-white transition" data-label="{{ instruction.label }}">저장된 오디오 보기</button>
                 </div>
+                <ul class="audio-list mt-2 space-y-2 hidden"></ul>
             </li>
             {% endfor %}
         </ul>
@@ -150,6 +152,7 @@
         btn.disabled = true;
     }
 
+    
     // 관리자 페이지 버튼 클릭 시 모달 표시
     document.getElementById('adminBtn').onclick = function() {
         document.getElementById('adminModal').classList.remove('hidden');
@@ -182,6 +185,47 @@
         err.textContent = msg;
         err.classList.remove('hidden');
     }
+
+    // 저장된 오디오 보기 버튼 기능
+    document.querySelectorAll('.show-audio-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const label = this.dataset.label;
+            const audioList = this.parentElement.parentElement.querySelector('.audio-list');
+            if (audioList.classList.contains('shown')) {
+                audioList.classList.remove('shown');
+                audioList.classList.add('hidden');
+                audioList.innerHTML = '';
+                this.textContent = '저장된 오디오 보기';
+                return;
+            }
+            fetch('/audio-files-by-label', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({label})
+            })
+            .then(res => res.json())
+            .then(data => {
+                audioList.innerHTML = '';
+                if (!data.files || data.files.length === 0) {
+                    audioList.innerHTML = '<li class="text-gray-500 text-sm">오디오 파일이 없습니다.</li>';
+                } else {
+                    data.files.forEach(file => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <div class="flex flex-col items-center">
+                                <span class="mb-1 text-gray-700">${file}</span>
+                                <audio controls src="/uploads/${encodeURIComponent(data.folder)}/${encodeURIComponent(file)}" class="w-72"></audio>
+                            </div>
+                        `;
+                        audioList.appendChild(li);
+                    });
+                }
+                audioList.classList.remove('hidden');
+                audioList.classList.add('shown');
+                btn.textContent = '오디오 목록 닫기';
+            });
+        });
+    });
     </script>
 </body>
 </html> 

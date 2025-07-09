@@ -1,20 +1,24 @@
 from models.instruction import Instruction
 from extensions import db
+from unidecode import unidecode
 
 
 def get_instruction_list():
     """
     Date: 2025-06-29
     Author: Minjun Park
-    Description: Get a list of all instruction texts (for recording page).
+    Description: Get a list of all instruction dicts (for recording page).
 
     Args:
         None
     Returns:
-        List of instruction texts (list of str)
+        List of instruction dicts (list of dict)
     """
-    # Query all instructions and return their text
-    return [i.text for i in Instruction.query.order_by(Instruction.created_at).all()]
+    # Query all instructions and return as dicts with label and folder
+    return [
+        {"label": i.text, "folder": unidecode(i.text)}
+        for i in Instruction.query.order_by(Instruction.created_at).all()
+    ]
 
 
 def get_all_instructions():
