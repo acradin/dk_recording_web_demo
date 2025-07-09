@@ -1,18 +1,12 @@
 import os
 from flask import (
     Flask,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    jsonify,
-    send_from_directory,
 )
 from dotenv import load_dotenv
 from extensions import db
 from routes.instruction import instruction_bp
 from routes.admin import admin_bp
-from unidecode import unidecode
+
 
 load_dotenv()  # .env 파일에서 환경변수 로드
 
