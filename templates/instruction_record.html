@@ -23,7 +23,7 @@
                     <button onclick="startRecording(this)" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition disabled:opacity-50">녹음 시작</button>
                     <button onclick="stopRecording(this)" disabled class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50">정지</button>
                     <button onclick="saveRecording(this)" disabled class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition disabled:opacity-50">저장</button>
-                    <audio controls style="display:none;"></audio>
+                    <audio controls class="hidden"></audio>
                     <button type="button" class="show-audio-btn px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-blue-400 hover:text-white transition" data-label="{{ instruction.label }}">저장된 오디오 보기</button>
                 </div>
                 <ul class="audio-list mt-2 space-y-2 hidden"></ul>
@@ -96,7 +96,7 @@
                     currentAudioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     const audioUrl = URL.createObjectURL(currentAudioBlob);
                     currentAudioElem.src = audioUrl;
-                    currentAudioElem.style.display = 'inline-block';
+                    currentAudioElem.classList.remove('hidden');
                     currentSaveBtn.disabled = false;
                 };
                 // Set references to current UI elements
@@ -143,11 +143,21 @@
                 resultDiv.textContent = `저장 실패: ${data.error}`;
                 resultDiv.className = 'mt-6 text-center text-red-600 text-sm';
             }
+            // 저장 후 플레이바 숨기기
+            if (currentAudioElem) {
+                currentAudioElem.classList.add('hidden');
+                currentAudioElem.src = '';
+            }
         })
         .catch(() => {
             const resultDiv = document.getElementById('upload-result');
             resultDiv.textContent = '저장 중 오류 발생';
             resultDiv.className = 'mt-6 text-center text-red-600 text-sm';
+            // 저장 실패 시에도 플레이바 숨기기
+            if (currentAudioElem) {
+                currentAudioElem.classList.add('hidden');
+                currentAudioElem.src = '';
+            }
         });
         btn.disabled = true;
     }
